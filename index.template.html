@@ -1,0 +1,467 @@
+<title>EU Market Entry Radar</title>
+<meta name="description" content="Where the online demand is, and what it costs to reach it: online buyers, cross-border buyers, VAT and GBP FX volatility for every EU market, from public feeds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --ground: #eef1f4;
+    --surface: #ffffff;
+    --surface-2: #f6f8fa;
+    --ink: #101828;
+    --ink-2: #475467;
+    --muted: #7a8494;
+    --hairline: #e3e7ec;
+    --axis: #c9cfd7;
+    --grid: #edf0f3;
+    --euro: #2a78d6;
+    --noneuro: #eb6834;
+    --ref: #898781;
+    --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec; --seq-4: #3987e5; --seq-5: #256abf; --seq-6: #184f95; --seq-7: #0d366b;
+    --good: #006300;
+    --bad: #b42318;
+    --tip-bg: #101828;
+    --tip-ink: #ffffff;
+    --ring: rgba(16,24,40,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #0e1116;
+      --surface: #171b22;
+      --surface-2: #1e2330;
+      --ink: #f2f4f7;
+      --ink-2: #c1c7d0;
+      --muted: #8b94a3;
+      --hairline: #2a303b;
+      --axis: #3a414d;
+      --grid: #222833;
+      --euro: #3987e5;
+      --noneuro: #d95926;
+      --ref: #898781;
+      --seq-1: #184f95; --seq-2: #1c5cab; --seq-3: #256abf; --seq-4: #2a78d6; --seq-5: #3987e5; --seq-6: #6da7ec; --seq-7: #9ec5f4;
+      --good: #4ade80;
+      --bad: #f97066;
+      --tip-bg: #f2f4f7;
+      --tip-ink: #101828;
+      --ring: rgba(255,255,255,0.10);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #0e1116;
+    --surface: #171b22;
+    --surface-2: #1e2330;
+    --ink: #f2f4f7;
+    --ink-2: #c1c7d0;
+    --muted: #8b94a3;
+    --hairline: #2a303b;
+    --axis: #3a414d;
+    --grid: #222833;
+    --euro: #3987e5;
+    --noneuro: #d95926;
+    --ref: #898781;
+    --seq-1: #184f95; --seq-2: #1c5cab; --seq-3: #256abf; --seq-4: #2a78d6; --seq-5: #3987e5; --seq-6: #6da7ec; --seq-7: #9ec5f4;
+    --good: #4ade80;
+    --bad: #f97066;
+    --tip-bg: #f2f4f7;
+    --tip-ink: #101828;
+    --ring: rgba(255,255,255,0.10);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .num { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 14px 20px 18px; display: grid; gap: 12px; }
+
+  /* header */
+  .hdr { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+  .hdr h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .hdr h1 span { color: var(--muted); font-weight: 400; }
+  .hdr .lede { margin: 2px 0 0; color: var(--ink-2); max-width: 70ch; }
+  .stamp { color: var(--muted); font-size: 11.5px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border: 1px solid var(--hairline); border-radius: 999px; background: var(--surface); font-size: 11px; color: var(--ink-2); }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .pill.live .dot { background: var(--good); }
+
+  /* kpi row */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--hairline); border-radius: 6px; padding: 10px 14px; display: grid; gap: 1px; align-content: start; }
+  .kpi .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .kpi .val { font-size: 30px; font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; }
+  .kpi .val small { font-size: 14px; color: var(--ink-2); font-weight: 400; margin-left: 2px; }
+  .kpi .sub { color: var(--ink-2); font-size: 12px; }
+
+  /* main grid */
+  .main { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--hairline); border-radius: 6px; padding: 12px 14px; min-width: 0; }
+  .card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .card-h h2 { margin: 0; font-size: 13.5px; font-weight: 600; }
+  .card-h .sub { color: var(--muted); font-size: 11.5px; }
+  .legend { display: flex; gap: 14px; align-items: center; font-size: 11.5px; color: var(--ink-2); flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .legend .sz { display: inline-flex; align-items: center; gap: 4px; }
+  .legend .sz b { display: inline-block; border: 1.5px solid var(--muted); border-radius: 50%; }
+  .right { display: grid; gap: 12px; grid-template-rows: auto 1fr; }
+
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  svg text { font-family: "IBM Plex Sans", system-ui, sans-serif; fill: var(--ink-2); }
+  svg .tick { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; fill: var(--muted); }
+  svg .axis-lbl { font-size: 11px; fill: var(--muted); }
+  svg .grid line { stroke: var(--grid); stroke-width: 1; }
+  svg .median line { stroke: var(--axis); stroke-width: 1; stroke-dasharray: 3 3; }
+  svg .median text { font-size: 10px; fill: var(--muted); }
+  svg .pt circle.mark { stroke: var(--surface); stroke-width: 2; fill-opacity: 0.85; transition: fill-opacity .12s; }
+  svg .pt circle.hit { fill: transparent; pointer-events: all; cursor: default; }
+  svg .pt.euro circle.mark { fill: var(--euro); }
+  svg .pt.noneuro circle.mark { fill: var(--noneuro); }
+  svg .pt text { font-size: 11px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+  svg .pt:hover circle.mark, svg .pt.hl circle.mark { fill-opacity: 1; stroke: var(--ink); }
+  svg .pt:focus { outline: none; }
+  svg .pt:focus circle.mark { stroke: var(--ink); }
+  svg .bar { cursor: default; }
+  svg .bar rect.mark { rx: 0; }
+  svg .bar:hover rect.mark, svg .bar.hl rect.mark { stroke: var(--ink); stroke-width: 1; }
+  svg .bar text { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 9.5px; fill: var(--muted); }
+  svg .bar text.v { fill: var(--ink-2); font-size: 9px; }
+
+  /* fx table */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: 500; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+  td { padding: 3px 6px; border-bottom: 1px solid var(--grid); white-space: nowrap; vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  th.r, td.r { text-align: right; }
+  tbody tr:hover td, tbody tr.hl td { background: var(--surface-2); }
+  td .cc { font-weight: 500; }
+  td .swatch { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+  .up { color: var(--good); } .down { color: var(--bad); }
+  .spark { width: 64px; height: 16px; display: inline-block; vertical-align: middle; }
+  .spark path { fill: none; stroke: var(--noneuro); stroke-width: 1.5; }
+  .spark circle { fill: var(--noneuro); }
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10.5px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--hairline); }
+  .tag.eu { border-color: transparent; background: color-mix(in oklab, var(--euro) 14%, transparent); color: var(--ink); }
+
+  .table-wrap { overflow-x: auto; }
+  .rank td:first-child { color: var(--muted); }
+  .bar-cell { display: inline-flex; align-items: center; gap: 6px; }
+  .bar-cell i { display: inline-block; height: 8px; background: var(--euro); border-radius: 0 2px 2px 0; opacity: .8; }
+  tr.noneuro .bar-cell i { background: var(--noneuro); }
+
+  /* tooltip */
+  #tip { position: fixed; z-index: 10; pointer-events: none; background: var(--tip-bg); color: var(--tip-ink); padding: 8px 10px; border-radius: 6px; font-size: 12px; line-height: 1.35; box-shadow: 0 6px 20px rgba(0,0,0,.18); max-width: 260px; }
+  #tip .t { font-weight: 600; margin-bottom: 3px; }
+  #tip .row { display: flex; justify-content: space-between; gap: 14px; }
+  #tip .row b { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 500; }
+  #tip .row span { opacity: .75; }
+
+  .foot { color: var(--muted); font-size: 11px; line-height: 1.5; display: grid; gap: 2px; }
+  .foot a { color: inherit; }
+  .method { color: var(--ink-2); }
+
+  @media (max-width: 1100px) {
+    .main { grid-template-columns: 1fr; }
+    .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+  @media (max-width: 520px) {
+    .kpis { grid-template-columns: 1fr; }
+    .wrap { padding: 12px 16px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="hdr">
+    <div>
+      <h1>EU Market Entry Radar <span>for a GBP-based brand</span></h1>
+      <p class="lede">Where the online shoppers are, how many already buy from abroad, and the two frictions a merchant of record absorbs on their behalf: VAT and FX. Every number from a public feed, rebuilt by one script.</p>
+    </div>
+    <div class="stamp">
+      <span id="fx-pill" class="pill"><span class="dot"></span><span id="fx-pill-text">ECB rates: snapshot</span></span>
+      <span>Built <span id="built" class="mono"></span></span>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="main">
+    <div class="card">
+      <div class="card-h">
+        <div><h2>Demand depth vs. openness to foreign sellers</h2><div class="sub">Each bubble is a country. Up = more people shop online. Right = more of them buy from sellers abroad. Size = working-age population.</div></div>
+        <div class="legend"><span><i style="background:var(--euro)"></i>Eurozone</span><span><i style="background:var(--noneuro)"></i>Own currency (FX exposure)</span></div>
+      </div>
+      <svg id="scatter" viewBox="0 0 760 392" role="img" aria-label="Scatter of online buyer share against cross-border buyer share by country"></svg>
+    </div>
+    <div class="right">
+      <div class="card">
+        <div class="card-h">
+          <div><h2>Standard VAT rate</h2><div class="sub">The rate a merchant of record charges and remits per destination. Range 17% to 27%.</div></div>
+        </div>
+        <svg id="vat" viewBox="0 0 520 150" role="img" aria-label="Standard VAT rate by country, sorted high to low"></svg>
+      </div>
+      <div class="card">
+        <div class="card-h">
+          <div><h2>GBP against the non-euro currencies</h2><div class="sub">Last 12 months of ECB reference rates. Volatility is annualised from daily moves.</div></div>
+        </div>
+        <div class="table-wrap">
+        <table id="fxtab">
+          <thead><tr><th>Currency</th><th>Markets</th><th class="r">1 GBP buys</th><th class="r">12m</th><th class="r">Vol</th><th>Path</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h">
+      <div><h2>Where the cross-border shoppers are</h2><div class="sub">Working-age people who bought from a foreign seller in the last 3 months. The first cut of a market-entry shortlist, before costs.</div></div>
+      <div class="legend"><span class="sub">Hover a row to find it on the chart</span></div>
+    </div>
+    <div class="table-wrap">
+    <table id="rank" class="rank">
+      <thead><tr>
+        <th>#</th><th>Market</th><th>Currency</th><th class="r">Buys online</th><th class="r">Buys cross-border</th><th>Cross-border shoppers</th><th class="r">Std VAT</th><th class="r">GBP FX vol</th><th class="r">GDP / head</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="method" id="method"></div>
+    <div id="sources"></div>
+    <div>Caveats: Eurostat shares are of individuals aged 16 to 74, applied here to the World Bank 15 to 64 population, so head counts are a proxy. Cross-border series ended in 2023. VAT is the standard rate only; reduced rates, OSS and IOSS thresholds are not modelled. Switzerland has no Eurostat cross-border data; Norway and Switzerland VAT entered by hand from the national tax authorities.</div>
+  </footer>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+(function () {
+  const $ = (s, el = document) => el.querySelector(s);
+  const fmtPct = v => v == null ? "n/a" : v.toFixed(0) + "%";
+  const fmtM = v => v == null ? "n/a" : (v / 1e6).toFixed(1) + "m";
+  const fmtK = v => v == null ? "n/a" : "$" + Math.round(v / 1000) + "k";
+  const CUR_NAME = { EUR:"Euro", CHF:"Franc", CZK:"Koruna", DKK:"Krone", HUF:"Forint", NOK:"Krone", PLN:"Zloty", RON:"Leu", SEK:"Krona" };
+  const MANUAL_VAT = { NO: 25, CH: 8.1 };
+
+  const rows = DATA.countries.map(r => ({ ...r, vat_standard: r.vat_standard ?? MANUAL_VAT[r.code] ?? null }));
+  const uk = rows.find(r => r.code === "UK");
+  const eu = rows.filter(r => r.eu);
+  const plotted = rows.filter(r => r.code !== "UK" && r.online_12m_pct != null && r.xb_any_pct != null);
+
+  $("#built").textContent = DATA.generated.replace("T", " ").slice(0, 16) + " UTC";
+
+  // ---------- KPIs ----------
+  const xbTotal = eu.reduce((s, r) => s + (r.xb_shoppers || 0), 0);
+  const onlineTotal = eu.reduce((s, r) => s + (r.online_shoppers || 0), 0);
+  const vats = eu.map(r => r.vat_standard).filter(v => v != null);
+  const vatLo = rows.find(r => r.eu && r.vat_standard === Math.min(...vats));
+  const vatHi = rows.find(r => r.eu && r.vat_standard === Math.max(...vats));
+  const fxEntries = Object.entries(DATA.fx).filter(([k]) => k !== "EUR");
+  const worstFx = fxEntries.sort((a, b) => b[1].vol_annualised_pct - a[1].vol_annualised_pct)[0];
+  const eurFx = DATA.fx.EUR;
+  const kpis = [
+    { lbl: "EU27 adults who shop online", val: DATA.eu27_online_12m_pct.toFixed(0), unit: "%", sub: `≈ ${fmtM(onlineTotal)} working-age online buyers across the 27 (Eurostat, ${plotted[0].online_year})` },
+    { lbl: "Already buying cross-border", val: fmtM(xbTotal).replace("m", ""), unit: "m people", sub: "bought from a foreign seller in the last 3 months (Eurostat, 2023). The reachable pool before any localisation." },
+    { lbl: "Standard VAT spread", val: `${vatLo.vat_standard}–${vatHi.vat_standard}`, unit: "%", sub: `${vatLo.name} to ${vatHi.name}. One OSS return, 27 different rates to get right.` },
+    { lbl: "Most volatile GBP pair", val: worstFx[0], unit: `${worstFx[1].vol_annualised_pct.toFixed(1)}% vol`, sub: `12m move ${worstFx[1].change_12m_pct > 0 ? "+" : ""}${worstFx[1].change_12m_pct.toFixed(1)}%. Euro for comparison: ${eurFx.vol_annualised_pct.toFixed(1)}% vol, ${eurFx.change_12m_pct > 0 ? "+" : ""}${eurFx.change_12m_pct.toFixed(1)}%.` },
+  ];
+  const kwrap = $("#kpis");
+  for (const k of kpis) {
+    const d = document.createElement("div"); d.className = "kpi";
+    const l = document.createElement("div"); l.className = "lbl"; l.textContent = k.lbl;
+    const v = document.createElement("div"); v.className = "val"; v.textContent = k.val;
+    const u = document.createElement("small"); u.textContent = k.unit; v.appendChild(u);
+    const s = document.createElement("div"); s.className = "sub"; s.textContent = k.sub;
+    d.append(l, v, s); kwrap.appendChild(d);
+  }
+
+  // ---------- tooltip ----------
+  const tip = $("#tip");
+  function showTip(evt, title, pairs) {
+    tip.replaceChildren();
+    const t = document.createElement("div"); t.className = "t"; t.textContent = title; tip.appendChild(t);
+    for (const [label, value] of pairs) {
+      const r = document.createElement("div"); r.className = "row";
+      const b = document.createElement("b"); b.textContent = value;
+      const s = document.createElement("span"); s.textContent = label;
+      r.append(b, s); tip.appendChild(r);
+    }
+    tip.hidden = false; moveTip(evt);
+  }
+  function moveTip(evt) {
+    const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = evt.clientX + pad, y = evt.clientY + pad;
+    if (x + w > innerWidth - 8) x = evt.clientX - w - pad;
+    if (y + h > innerHeight - 8) y = evt.clientY - h - pad;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function hideTip() { tip.hidden = true; }
+  const pairsFor = r => [
+    [`buy online (${r.online_year})`, fmtPct(r.online_12m_pct)],
+    ["buy from foreign sellers (2023)", fmtPct(r.xb_any_pct)],
+    ["  of which other EU", fmtPct(r.xb_eu_pct)],
+    ["cross-border shoppers", fmtM(r.xb_shoppers)],
+    ["working-age population", fmtM(r.pop_15_64)],
+    ["standard VAT", r.vat_standard == null ? "n/a" : r.vat_standard + "%"],
+    ["currency", r.currency + (r.currency !== "EUR" && DATA.fx[r.currency] ? ` · ${DATA.fx[r.currency].vol_annualised_pct.toFixed(1)}% vol` : "")],
+  ];
+
+  // cross-highlight
+  function hl(code, on) {
+    document.querySelectorAll(`[data-code="${code}"]`).forEach(el => el.classList.toggle("hl", on));
+  }
+
+  // ---------- scatter ----------
+  const svg = $("#scatter");
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (parent) parent.appendChild(e); return e; };
+  const W = 760, H = 392, m = { t: 12, r: 16, b: 40, l: 44 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const xMax = Math.ceil(Math.max(...plotted.map(r => r.xb_any_pct)) / 10) * 10 + 5;
+  const yMin = Math.floor(Math.min(...plotted.map(r => r.online_12m_pct)) / 10) * 10 - 5;
+  const x = v => m.l + (v / xMax) * iw;
+  const y = v => m.t + ih - ((v - yMin) / (100 - yMin)) * ih;
+  const popMax = Math.max(...plotted.map(r => r.pop_15_64));
+  const rad = p => 5 + 27 * Math.sqrt(p / popMax);
+
+  const grid = el("g", { class: "grid" }, svg);
+  for (let v = 0; v <= xMax; v += 10) { el("line", { x1: x(v), x2: x(v), y1: m.t, y2: m.t + ih }, grid); el("text", { x: x(v), y: m.t + ih + 14, "text-anchor": "middle", class: "tick" }, grid).textContent = v + "%"; }
+  for (let v = Math.ceil(yMin / 10) * 10; v <= 100; v += 10) { el("line", { x1: m.l, x2: m.l + iw, y1: y(v), y2: y(v) }, grid); el("text", { x: m.l - 6, y: y(v) + 3, "text-anchor": "end", class: "tick" }, grid).textContent = v + "%"; }
+  el("text", { x: m.l + iw / 2, y: H - 6, "text-anchor": "middle", class: "axis-lbl" }, svg).textContent = "Bought from a seller in another country, last 3 months (% of 16 to 74s, 2023)";
+  el("text", { x: 12, y: m.t + ih / 2, "text-anchor": "middle", class: "axis-lbl", transform: `rotate(-90 12 ${m.t + ih / 2})` }, svg).textContent = "Bought online, last 12 months (% of 16 to 74s)";
+
+  const median = a => { const s = [...a].sort((p, q) => p - q); const k = s.length / 2; return s.length % 2 ? s[Math.floor(k)] : (s[k - 1] + s[k]) / 2; };
+  const euPlot = plotted.filter(r => r.eu);
+  const mx = median(euPlot.map(r => r.xb_any_pct)), my = median(euPlot.map(r => r.online_12m_pct));
+  const med = el("g", { class: "median" }, svg);
+  el("line", { x1: x(mx), x2: x(mx), y1: m.t, y2: m.t + ih }, med);
+  el("line", { x1: m.l, x2: m.l + iw, y1: y(my), y2: y(my) }, med);
+  el("text", { x: x(mx) + 4, y: m.t + 10 }, med).textContent = `EU median ${mx.toFixed(0)}%`;
+  el("text", { x: m.l + iw - 2, y: y(my) - 4, "text-anchor": "end" }, med).textContent = `EU median ${my.toFixed(0)}%`;
+
+  // draw large bubbles first so small ones stay on top
+  const byPop = [...plotted].sort((a, b) => b.pop_15_64 - a.pop_15_64);
+  const labelSet = new Set([...plotted].sort((a, b) => (b.xb_shoppers || 0) - (a.xb_shoppers || 0)).slice(0, 9).map(r => r.code));
+  // [side, dy]: side 1 = label to the right of the bubble edge, -1 = to the left
+  const labelPos = { DE: [1, 4], FR: [1, 4], ES: [-1, 4], IT: [1, 4], NL: [1, 4], BE: [1, 4], AT: [1, -9], PL: [1, 4], CZ: [1, -10], SE: [1, 4], IE: [1, 4] };
+  for (const r of byPop) {
+    const g = el("g", { class: "pt " + (r.currency === "EUR" ? "euro" : "noneuro"), "data-code": r.code, tabindex: 0, role: "img", "aria-label": `${r.name}: ${fmtPct(r.online_12m_pct)} buy online, ${fmtPct(r.xb_any_pct)} buy cross-border` }, svg);
+    const cx = x(r.xb_any_pct), cy = y(r.online_12m_pct), rr = rad(r.pop_15_64);
+    el("circle", { class: "mark", cx, cy, r: rr }, g);
+    el("circle", { class: "hit", cx, cy, r: Math.max(rr, 12) }, g);
+    if (labelSet.has(r.code)) { const [side, dy] = labelPos[r.code] || [1, 4]; el("text", { x: cx + side * (rr + 5), y: cy + dy, "text-anchor": side > 0 ? "start" : "end" }, g).textContent = r.name; }
+    const title = r.name;
+    g.addEventListener("pointerenter", e => { showTip(e, title, pairsFor(r)); hl(r.code, true); });
+    g.addEventListener("pointermove", moveTip);
+    g.addEventListener("pointerleave", () => { hideTip(); hl(r.code, false); });
+    g.addEventListener("focus", e => { const b = g.getBoundingClientRect(); showTip({ clientX: b.right, clientY: b.top }, title, pairsFor(r)); hl(r.code, true); });
+    g.addEventListener("blur", () => { hideTip(); hl(r.code, false); });
+  }
+
+  // ---------- VAT columns ----------
+  const vsvg = $("#vat");
+  const vrows = rows.filter(r => r.code !== "UK" && r.vat_standard != null).sort((a, b) => b.vat_standard - a.vat_standard || a.name.localeCompare(b.name));
+  const VW = 520, VH = 150, vm = { t: 14, r: 4, b: 22, l: 4 };
+  const slot = (VW - vm.l - vm.r) / vrows.length, bw = Math.max(2, slot - 2);
+  const vMax = 28, vy = v => vm.t + (VH - vm.t - vm.b) * (1 - v / vMax);
+  const ramp = ["--seq-1", "--seq-2", "--seq-3", "--seq-4", "--seq-5", "--seq-6", "--seq-7"];
+  const vMin = Math.min(...vrows.map(r => r.vat_standard)), vRange = Math.max(...vrows.map(r => r.vat_standard)) - vMin;
+  const ukY = vy(uk.vat_standard);
+  el("line", { x1: vm.l, x2: VW - vm.r, y1: ukY, y2: ukY, stroke: "var(--ref)", "stroke-dasharray": "3 3" }, vsvg);
+  el("text", { x: VW - vm.r, y: ukY + 11, "text-anchor": "end", class: "tick" }, vsvg).textContent = `UK ${uk.vat_standard}%`;
+  vrows.forEach((r, i) => {
+    const g = el("g", { class: "bar", "data-code": r.code, tabindex: 0, "aria-label": `${r.name} standard VAT ${r.vat_standard}%` }, vsvg);
+    const xx = vm.l + i * slot + 1, h = vy(0) - vy(r.vat_standard);
+    const step = ramp[Math.min(6, Math.floor(((r.vat_standard - vMin) / (vRange || 1)) * 6.999))];
+    const rect = el("rect", { class: "mark", x: xx, y: vy(r.vat_standard), width: bw, height: h, fill: `var(${step})` }, g);
+    el("text", { x: xx + bw / 2, y: VH - vm.b + 12, "text-anchor": "middle" }, g).textContent = r.code;
+    el("text", { class: "v", x: xx + bw / 2, y: vy(r.vat_standard) - 3, "text-anchor": "middle" }, g).textContent = r.vat_standard;
+    const t = r.name;
+    g.addEventListener("pointerenter", e => { showTip(e, t, [["standard VAT", r.vat_standard + "%"], ["in force since", r.vat_from && r.vat_from !== "0000-01-01" ? r.vat_from : "before 2011 (source floor)"], ["currency", r.currency]]); hl(r.code, true); });
+    g.addEventListener("pointermove", moveTip);
+    g.addEventListener("pointerleave", () => { hideTip(); hl(r.code, false); });
+  });
+
+  // ---------- FX table ----------
+  const marketsFor = c => rows.filter(r => r.currency === c && r.code !== "UK").map(r => r.code).join(", ");
+  const spark = (vals) => {
+    const w = 64, h = 16, lo = Math.min(...vals), hi = Math.max(...vals);
+    const px = i => (i / (vals.length - 1)) * w, py = v => hi === lo ? h / 2 : h - 2 - ((v - lo) / (hi - lo)) * (h - 4);
+    const s = el("svg", { class: "spark", viewBox: `0 0 ${w} ${h}` });
+    el("path", { d: vals.map((v, i) => (i ? "L" : "M") + px(i).toFixed(1) + " " + py(v).toFixed(1)).join(" ") }, s);
+    el("circle", { cx: w, cy: py(vals[vals.length - 1]), r: 2 }, s);
+    return s;
+  };
+  const fxBody = $("#fxtab tbody");
+  const fxOrder = Object.entries(DATA.fx).sort((a, b) => (a[0] === "EUR" ? -1 : b[0] === "EUR" ? 1 : b[1].vol_annualised_pct - a[1].vol_annualised_pct));
+  for (const [c, f] of fxOrder) {
+    const tr = document.createElement("tr"); tr.dataset.cur = c;
+    const cells = [];
+    const td0 = document.createElement("td"); const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = c === "EUR" ? "var(--euro)" : "var(--noneuro)"; const cc = document.createElement("span"); cc.className = "cc mono"; cc.textContent = c; td0.append(sw, cc, document.createTextNode(" " + (CUR_NAME[c] || ""))); cells.push(td0);
+    const td1 = document.createElement("td"); td1.textContent = c === "EUR" ? "20 markets" : marketsFor(c); cells.push(td1);
+    const td2 = document.createElement("td"); td2.className = "r num"; td2.dataset.role = "latest"; td2.textContent = f.latest.toFixed(c === "HUF" ? 1 : 3); cells.push(td2);
+    const td3 = document.createElement("td"); td3.className = "r num " + (f.change_12m_pct >= 0 ? "up" : "down"); td3.textContent = (f.change_12m_pct >= 0 ? "+" : "") + f.change_12m_pct.toFixed(1) + "%"; cells.push(td3);
+    const td4 = document.createElement("td"); td4.className = "r num"; td4.textContent = f.vol_annualised_pct.toFixed(1) + "%"; cells.push(td4);
+    const td5 = document.createElement("td"); td5.appendChild(spark(f.spark)); cells.push(td5);
+    tr.append(...cells); fxBody.appendChild(tr);
+  }
+
+  // ---------- rank table ----------
+  const rbody = $("#rank tbody");
+  const ranked = rows.filter(r => r.xb_shoppers != null).sort((a, b) => b.xb_shoppers - a.xb_shoppers).slice(0, 8);
+  const xbMax = ranked[0].xb_shoppers;
+  ranked.forEach((r, i) => {
+    const tr = document.createElement("tr"); tr.dataset.code = r.code; if (r.currency !== "EUR") tr.classList.add("noneuro");
+    const td = (txt, cls) => { const d = document.createElement("td"); if (cls) d.className = cls; if (txt != null) d.textContent = txt; return d; };
+    const name = td(null); const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = r.currency === "EUR" ? "var(--euro)" : "var(--noneuro)"; name.append(sw, document.createTextNode(r.name)); name.style.fontWeight = 500;
+    const cur = td(null); const tg = document.createElement("span"); tg.className = "tag mono" + (r.currency === "EUR" ? " eu" : ""); tg.textContent = r.currency; cur.appendChild(tg);
+    const xb = td(null); const bc = document.createElement("span"); bc.className = "bar-cell"; const bar = document.createElement("i"); bar.style.width = Math.round(120 * r.xb_shoppers / xbMax) + "px"; const bv = document.createElement("span"); bv.className = "num"; bv.textContent = fmtM(r.xb_shoppers); bc.append(bar, bv); xb.appendChild(bc);
+    tr.append(td(i + 1, "num"), name, cur, td(fmtPct(r.online_12m_pct), "r num"), td(fmtPct(r.xb_any_pct), "r num"), xb, td(r.vat_standard + "%", "r num"), td(r.currency === "EUR" ? DATA.fx.EUR.vol_annualised_pct.toFixed(1) + "%" : (DATA.fx[r.currency]?.vol_annualised_pct.toFixed(1) ?? "0.0") + "%", "r num"), td(fmtK(r.gdp_pc_usd), "r num"));
+    tr.addEventListener("pointerenter", () => hl(r.code, true));
+    tr.addEventListener("pointerleave", () => hl(r.code, false));
+    rbody.appendChild(tr);
+  });
+
+  // ---------- footer ----------
+  const S = DATA.sources;
+  $("#method").textContent = `Method: cross-border shoppers = working-age population × share who bought from a foreign seller. Online buyers = population × share who bought online in the last 12 months. FX volatility = standard deviation of daily log returns × √252, window ${S.frankfurter.window}. VAT is the standard rate in force on the build date.`;
+  const src = $("#sources");
+  const links = [
+    ["Eurostat isoc_ec_ib20", S.eurostat_ib20.url, `updated ${(S.eurostat_ib20.updated || "").slice(0, 10)}`],
+    ["Eurostat isoc_ec_ibos", S.eurostat_ibos.url, "2023, final year of the series"],
+    ["World Bank SP.POP.1564.TO, NY.GDP.PCAP.CD", "https://data.worldbank.org/indicator/SP.POP.1564.TO", "2024"],
+    ["ECB reference rates via Frankfurter", "https://frankfurter.dev", "GBP base"],
+    ["ibericode/vat-rates", S.vat.url, `last commit ${S.vat.last_commit}`],
+  ];
+  src.appendChild(document.createTextNode("Sources: "));
+  links.forEach(([n, u, note], i) => { const a = document.createElement("a"); a.href = u; a.target = "_blank"; a.rel = "noopener"; a.textContent = n; src.appendChild(a); src.appendChild(document.createTextNode(` (${note})${i < links.length - 1 ? " · " : ""}`)); });
+
+  // ---------- live FX refresh (works where the page is hosted; silently falls back to the snapshot) ----------
+  (async () => {
+    try {
+      const syms = Object.keys(DATA.fx).join(",");
+      const ctrl = new AbortController(); setTimeout(() => ctrl.abort(), 5000);
+      const res = await fetch(`https://api.frankfurter.dev/v1/latest?base=GBP&symbols=${syms}`, { signal: ctrl.signal });
+      if (!res.ok) return;
+      const live = await res.json();
+      for (const tr of fxBody.querySelectorAll("tr")) {
+        const c = tr.dataset.cur; const v = live.rates[c]; if (v == null) continue;
+        tr.querySelector('[data-role="latest"]').textContent = v.toFixed(c === "HUF" ? 1 : 3);
+      }
+      const pill = $("#fx-pill"); pill.classList.add("live"); $("#fx-pill-text").textContent = `ECB rates: live, ${live.date}`;
+    } catch (e) { /* snapshot stays */ }
+  })();
+})();
+</script>

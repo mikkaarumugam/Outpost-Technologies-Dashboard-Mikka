@@ -1,0 +1,467 @@
+<title>EU Market Entry Radar</title>
+<meta name="description" content="Where the online demand is, and what it costs to reach it: online buyers, cross-border buyers, VAT and GBP FX volatility for every EU market, from public feeds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --ground: #eef1f4;
+    --surface: #ffffff;
+    --surface-2: #f6f8fa;
+    --ink: #101828;
+    --ink-2: #475467;
+    --muted: #7a8494;
+    --hairline: #e3e7ec;
+    --axis: #c9cfd7;
+    --grid: #edf0f3;
+    --euro: #2a78d6;
+    --noneuro: #eb6834;
+    --ref: #898781;
+    --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec; --seq-4: #3987e5; --seq-5: #256abf; --seq-6: #184f95; --seq-7: #0d366b;
+    --good: #006300;
+    --bad: #b42318;
+    --tip-bg: #101828;
+    --tip-ink: #ffffff;
+    --ring: rgba(16,24,40,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #0e1116;
+      --surface: #171b22;
+      --surface-2: #1e2330;
+      --ink: #f2f4f7;
+      --ink-2: #c1c7d0;
+      --muted: #8b94a3;
+      --hairline: #2a303b;
+      --axis: #3a414d;
+      --grid: #222833;
+      --euro: #3987e5;
+      --noneuro: #d95926;
+      --ref: #898781;
+      --seq-1: #184f95; --seq-2: #1c5cab; --seq-3: #256abf; --seq-4: #2a78d6; --seq-5: #3987e5; --seq-6: #6da7ec; --seq-7: #9ec5f4;
+      --good: #4ade80;
+      --bad: #f97066;
+      --tip-bg: #f2f4f7;
+      --tip-ink: #101828;
+      --ring: rgba(255,255,255,0.10);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #0e1116;
+    --surface: #171b22;
+    --surface-2: #1e2330;
+    --ink: #f2f4f7;
+    --ink-2: #c1c7d0;
+    --muted: #8b94a3;
+    --hairline: #2a303b;
+    --axis: #3a414d;
+    --grid: #222833;
+    --euro: #3987e5;
+    --noneuro: #d95926;
+    --ref: #898781;
+    --seq-1: #184f95; --seq-2: #1c5cab; --seq-3: #256abf; --seq-4: #2a78d6; --seq-5: #3987e5; --seq-6: #6da7ec; --seq-7: #9ec5f4;
+    --good: #4ade80;
+    --bad: #f97066;
+    --tip-bg: #f2f4f7;
+    --tip-ink: #101828;
+    --ring: rgba(255,255,255,0.10);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .num { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 14px 20px 18px; display: grid; gap: 12px; }
+
+  /* header */
+  .hdr { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+  .hdr h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .hdr h1 span { color: var(--muted); font-weight: 400; }
+  .hdr .lede { margin: 2px 0 0; color: var(--ink-2); max-width: 70ch; }
+  .stamp { color: var(--muted); font-size: 11.5px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border: 1px solid var(--hairline); border-radius: 999px; background: var(--surface); font-size: 11px; color: var(--ink-2); }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .pill.live .dot { background: var(--good); }
+
+  /* kpi row */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--hairline); border-radius: 6px; padding: 10px 14px; display: grid; gap: 1px; align-content: start; }
+  .kpi .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .kpi .val { font-size: 30px; font-weight: 500; line-height: 1.1; letter-spacing: -0.02em; }
+  .kpi .val small { font-size: 14px; color: var(--ink-2); font-weight: 400; margin-left: 2px; }
+  .kpi .sub { color: var(--ink-2); font-size: 12px; }
+
+  /* main grid */
+  .main { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--hairline); border-radius: 6px; padding: 12px 14px; min-width: 0; }
+  .card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .card-h h2 { margin: 0; font-size: 13.5px; font-weight: 600; }
+  .card-h .sub { color: var(--muted); font-size: 11.5px; }
+  .legend { display: flex; gap: 14px; align-items: center; font-size: 11.5px; color: var(--ink-2); flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .legend .sz { display: inline-flex; align-items: center; gap: 4px; }
+  .legend .sz b { display: inline-block; border: 1.5px solid var(--muted); border-radius: 50%; }
+  .right { display: grid; gap: 12px; grid-template-rows: auto 1fr; }
+
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  svg text { font-family: "IBM Plex Sans", system-ui, sans-serif; fill: var(--ink-2); }
+  svg .tick { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 10px; fill: var(--muted); }
+  svg .axis-lbl { font-size: 11px; fill: var(--muted); }
+  svg .grid line { stroke: var(--grid); stroke-width: 1; }
+  svg .median line { stroke: var(--axis); stroke-width: 1; stroke-dasharray: 3 3; }
+  svg .median text { font-size: 10px; fill: var(--muted); }
+  svg .pt circle.mark { stroke: var(--surface); stroke-width: 2; fill-opacity: 0.85; transition: fill-opacity .12s; }
+  svg .pt circle.hit { fill: transparent; pointer-events: all; cursor: default; }
+  svg .pt.euro circle.mark { fill: var(--euro); }
+  svg .pt.noneuro circle.mark { fill: var(--noneuro); }
+  svg .pt text { font-size: 11px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+  svg .pt:hover circle.mark, svg .pt.hl circle.mark { fill-opacity: 1; stroke: var(--ink); }
+  svg .pt:focus { outline: none; }
+  svg .pt:focus circle.mark { stroke: var(--ink); }
+  svg .bar { cursor: default; }
+  svg .bar rect.mark { rx: 0; }
+  svg .bar:hover rect.mark, svg .bar.hl rect.mark { stroke: var(--ink); stroke-width: 1; }
+  svg .bar text { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 9.5px; fill: var(--muted); }
+  svg .bar text.v { fill: var(--ink-2); font-size: 9px; }
+
+  /* fx table */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: 500; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+  td { padding: 3px 6px; border-bottom: 1px solid var(--grid); white-space: nowrap; vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  th.r, td.r { text-align: right; }
+  tbody tr:hover td, tbody tr.hl td { background: var(--surface-2); }
+  td .cc { font-weight: 500; }
+  td .swatch { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+  .up { color: var(--good); } .down { color: var(--bad); }
+  .spark { width: 64px; height: 16px; display: inline-block; vertical-align: middle; }
+  .spark path { fill: none; stroke: var(--noneuro); stroke-width: 1.5; }
+  .spark circle { fill: var(--noneuro); }
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10.5px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--hairline); }
+  .tag.eu { border-color: transparent; background: color-mix(in oklab, var(--euro) 14%, transparent); color: var(--ink); }
+
+  .table-wrap { overflow-x: auto; }
+  .rank td:first-child { color: var(--muted); }
+  .bar-cell { display: inline-flex; align-items: center; gap: 6px; }
+  .bar-cell i { display: inline-block; height: 8px; background: var(--euro); border-radius: 0 2px 2px 0; opacity: .8; }
+  tr.noneuro .bar-cell i { background: var(--noneuro); }
+
+  /* tooltip */
+  #tip { position: fixed; z-index: 10; pointer-events: none; background: var(--tip-bg); color: var(--tip-ink); padding: 8px 10px; border-radius: 6px; font-size: 12px; line-height: 1.35; box-shadow: 0 6px 20px rgba(0,0,0,.18); max-width: 260px; }
+  #tip .t { font-weight: 600; margin-bottom: 3px; }
+  #tip .row { display: flex; justify-content: space-between; gap: 14px; }
+  #tip .row b { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 500; }
+  #tip .row span { opacity: .75; }
+
+  .foot { color: var(--muted); font-size: 11px; line-height: 1.5; display: grid; gap: 2px; }
+  .foot a { color: inherit; }
+  .method { color: var(--ink-2); }
+
+  @media (max-width: 1100px) {
+    .main { grid-template-columns: 1fr; }
+    .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+  @media (max-width: 520px) {
+    .kpis { grid-template-columns: 1fr; }
+    .wrap { padding: 12px 16px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="hdr">
+    <div>
+      <h1>EU Market Entry Radar <span>for a GBP-based brand</span></h1>
+      <p class="lede">Where the online shoppers are, how many already buy from abroad, and the two frictions a merchant of record absorbs on their behalf: VAT and FX. Every number from a public feed, rebuilt by one script.</p>
+    </div>
+    <div class="stamp">
+      <span id="fx-pill" class="pill"><span class="dot"></span><span id="fx-pill-text">ECB rates: snapshot</span></span>
+      <span>Built <span id="built" class="mono"></span></span>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="main">
+    <div class="card">
+      <div class="card-h">
+        <div><h2>Demand depth vs. openness to foreign sellers</h2><div class="sub">Each bubble is a country. Up = more people shop online. Right = more of them buy from sellers abroad. Size = working-age population.</div></div>
+        <div class="legend"><span><i style="background:var(--euro)"></i>Eurozone</span><span><i style="background:var(--noneuro)"></i>Own currency (FX exposure)</span></div>
+      </div>
+      <svg id="scatter" viewBox="0 0 760 392" role="img" aria-label="Scatter of online buyer share against cross-border buyer share by country"></svg>
+    </div>
+    <div class="right">
+      <div class="card">
+        <div class="card-h">
+          <div><h2>Standard VAT rate</h2><div class="sub">The rate a merchant of record charges and remits per destination. Range 17% to 27%.</div></div>
+        </div>
+        <svg id="vat" viewBox="0 0 520 150" role="img" aria-label="Standard VAT rate by country, sorted high to low"></svg>
+      </div>
+      <div class="card">
+        <div class="card-h">
+          <div><h2>GBP against the non-euro currencies</h2><div class="sub">Last 12 months of ECB reference rates. Volatility is annualised from daily moves.</div></div>
+        </div>
+        <div class="table-wrap">
+        <table id="fxtab">
+          <thead><tr><th>Currency</th><th>Markets</th><th class="r">1 GBP buys</th><th class="r">12m</th><th class="r">Vol</th><th>Path</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-h">
+      <div><h2>Where the cross-border shoppers are</h2><div class="sub">Working-age people who bought from a foreign seller in the last 3 months. The first cut of a market-entry shortlist, before costs.</div></div>
+      <div class="legend"><span class="sub">Hover a row to find it on the chart</span></div>
+    </div>
+    <div class="table-wrap">
+    <table id="rank" class="rank">
+      <thead><tr>
+        <th>#</th><th>Market</th><th>Currency</th><th class="r">Buys online</th><th class="r">Buys cross-border</th><th>Cross-border shoppers</th><th class="r">Std VAT</th><th class="r">GBP FX vol</th><th class="r">GDP / head</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="method" id="method"></div>
+    <div id="sources"></div>
+    <div>Caveats: Eurostat shares are of individuals aged 16 to 74, applied here to the World Bank 15 to 64 population, so head counts are a proxy. Cross-border series ended in 2023. VAT is the standard rate only; reduced rates, OSS and IOSS thresholds are not modelled. Switzerland has no Eurostat cross-border data; Norway and Switzerland VAT entered by hand from the national tax authorities.</div>
+  </footer>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+const DATA = {"generated":"2026-09-14T20:39:00+00:00","eu27_online_12m_pct":73.56,"countries":[{"code":"AT","name":"Austria","iso3":"AUT","currency":"EUR","eu":true,"online_12m_pct":72.71,"online_year":"2025","xb_any_pct":45.09,"xb_eu_pct":43.2,"xb_world_pct":15.17,"dom_pct":44.17,"pop_15_64":5980887,"pop_year":"2024","gdp_pc_usd":58269,"vat_standard":20,"vat_from":"2016-01-01","online_shoppers":4348703,"xb_shoppers":2696782,"fx_vol":3.33},{"code":"BE","name":"Belgium","iso3":"BEL","currency":"EUR","eu":true,"online_12m_pct":78.53,"online_year":"2025","xb_any_pct":43.26,"xb_eu_pct":40.55,"xb_world_pct":10.34,"dom_pct":54.81,"pop_15_64":7523789,"pop_year":"2024","gdp_pc_usd":56582,"vat_standard":21,"vat_from":"0000-01-01","online_shoppers":5908432,"xb_shoppers":3254791,"fx_vol":3.33},{"code":"BG","name":"Bulgaria","iso3":"BGR","currency":"EUR","eu":true,"online_12m_pct":51.2,"online_year":"2025","xb_any_pct":8.71,"xb_eu_pct":7.38,"xb_world_pct":3.48,"dom_pct":25.71,"pop_15_64":4089993,"pop_year":"2024","gdp_pc_usd":17597,"vat_standard":20,"vat_from":"0000-01-01","online_shoppers":2094076,"xb_shoppers":356238,"fx_vol":3.33},{"code":"HR","name":"Croatia","iso3":"HRV","currency":"EUR","eu":true,"online_12m_pct":61.72,"online_year":"2025","xb_any_pct":26.07,"xb_eu_pct":23.3,"xb_world_pct":9.48,"dom_pct":41.84,"pop_15_64":2431415,"pop_year":"2024","gdp_pc_usd":24050,"vat_standard":25,"vat_from":"0000-01-01","online_shoppers":1500669,"xb_shoppers":633870,"fx_vol":3.33},{"code":"CY","name":"Cyprus","iso3":"CYP","currency":"EUR","eu":true,"online_12m_pct":63.41,"online_year":"2025","xb_any_pct":44.44,"xb_eu_pct":40.83,"xb_world_pct":23.87,"dom_pct":43.79,"pop_15_64":941447,"pop_year":"2024","gdp_pc_usd":38674,"vat_standard":19,"vat_from":"0000-01-01","online_shoppers":596972,"xb_shoppers":418379,"fx_vol":3.33},{"code":"CZ","name":"Czechia","iso3":"CZE","currency":"CZK","eu":true,"online_12m_pct":83.67,"online_year":"2025","xb_any_pct":28.95,"xb_eu_pct":24.61,"xb_world_pct":11.48,"dom_pct":61.51,"pop_15_64":6952754,"pop_year":"2024","gdp_pc_usd":31828,"vat_standard":21,"vat_from":"2024-01-01","online_shoppers":5817369,"xb_shoppers":2012822,"fx_vol":3.85},{"code":"DK","name":"Denmark","iso3":"DNK","currency":"DKK","eu":true,"online_12m_pct":91.18,"online_year":"2025","xb_any_pct":35.42,"xb_eu_pct":31.81,"xb_world_pct":12.55,"dom_pct":71.13,"pop_15_64":3791657,"pop_year":"2024","gdp_pc_usd":71026,"vat_standard":25,"vat_from":"0000-01-01","online_shoppers":3457233,"xb_shoppers":1343005,"fx_vol":3.35},{"code":"EE","name":"Estonia","iso3":"EST","currency":"EUR","eu":true,"online_12m_pct":76.53,"online_year":"2025","xb_any_pct":33.32,"xb_eu_pct":26.66,"xb_world_pct":16.75,"dom_pct":54.99,"pop_15_64":865468,"pop_year":"2024","gdp_pc_usd":31428,"vat_standard":24,"vat_from":"2025-07-01","online_shoppers":662343,"xb_shoppers":288374,"fx_vol":3.33},{"code":"FI","name":"Finland","iso3":"FIN","currency":"EUR","eu":true,"online_12m_pct":82.04,"online_year":"2025","xb_any_pct":31.25,"xb_eu_pct":28.08,"xb_world_pct":10.93,"dom_pct":51.39,"pop_15_64":3454536,"pop_year":"2024","gdp_pc_usd":53156,"vat_standard":25.5,"vat_from":"2026-01-01","online_shoppers":2834101,"xb_shoppers":1079542,"fx_vol":3.33},{"code":"FR","name":"France","iso3":"FRA","currency":"EUR","eu":true,"online_12m_pct":80.15,"online_year":"2025","xb_any_pct":33.99,"xb_eu_pct":25.43,"xb_world_pct":20.41,"dom_pct":50.02,"pop_15_64":42055285,"pop_year":"2024","gdp_pc_usd":46103,"vat_standard":20,"vat_from":"2014-01-01","online_shoppers":33707311,"xb_shoppers":14294591,"fx_vol":3.33},{"code":"DE","name":"Germany","iso3":"DEU","currency":"EUR","eu":true,"online_12m_pct":81.38,"online_year":"2025","xb_any_pct":16.88,"xb_eu_pct":13.67,"xb_world_pct":7.86,"dom_pct":53.36,"pop_15_64":52527137,"pop_year":"2024","gdp_pc_usd":56104,"vat_standard":19,"vat_from":"2021-01-01","online_shoppers":42746584,"xb_shoppers":8866581,"fx_vol":3.33},{"code":"EL","name":"Greece","iso3":"GRC","currency":"EUR","eu":true,"online_12m_pct":68.0,"online_year":"2025","xb_any_pct":15.26,"xb_eu_pct":13.43,"xb_world_pct":5.78,"dom_pct":41.48,"pop_15_64":6538672,"pop_year":"2024","gdp_pc_usd":24626,"vat_standard":24,"vat_from":"2016-06-01","online_shoppers":4446297,"xb_shoppers":997801,"fx_vol":3.33},{"code":"HU","name":"Hungary","iso3":"HUN","currency":"HUF","eu":true,"online_12m_pct":67.68,"online_year":"2025","xb_any_pct":27.21,"xb_eu_pct":25.0,"xb_world_pct":9.93,"dom_pct":52.89,"pop_15_64":6177612,"pop_year":"2024","gdp_pc_usd":23305,"vat_standard":27,"vat_from":"0000-01-01","online_shoppers":4181008,"xb_shoppers":1680928,"fx_vol":8.61},{"code":"IE","name":"Ireland","iso3":"IRL","currency":"EUR","eu":true,"online_12m_pct":95.05,"online_year":"2025","xb_any_pct":50.9,"xb_eu_pct":44.45,"xb_world_pct":30.0,"dom_pct":59.83,"pop_15_64":3537072,"pop_year":"2024","gdp_pc_usd":112895,"vat_standard":23,"vat_from":"2021-03-01","online_shoppers":3361987,"xb_shoppers":1800370,"fx_vol":3.33},{"code":"IT","name":"Italy","iso3":"ITA","currency":"EUR","eu":true,"online_12m_pct":56.22,"online_year":"2025","xb_any_pct":17.16,"xb_eu_pct":14.77,"xb_world_pct":9.7,"dom_pct":29.18,"pop_15_64":37424897,"pop_year":"2024","gdp_pc_usd":40430,"vat_standard":22,"vat_from":"0000-01-01","online_shoppers":21040277,"xb_shoppers":6422112,"fx_vol":3.33},{"code":"LV","name":"Latvia","iso3":"LVA","currency":"EUR","eu":true,"online_12m_pct":69.73,"online_year":"2025","xb_any_pct":26.93,"xb_eu_pct":21.45,"xb_world_pct":11.53,"dom_pct":36.29,"pop_15_64":1172875,"pop_year":"2024","gdp_pc_usd":23579,"vat_standard":21,"vat_from":"0000-01-01","online_shoppers":817846,"xb_shoppers":315855,"fx_vol":3.33},{"code":"LT","name":"Lithuania","iso3":"LTU","currency":"EUR","eu":true,"online_12m_pct":64.83,"online_year":"2025","xb_any_pct":21.94,"xb_eu_pct":17.75,"xb_world_pct":10.69,"dom_pct":44.27,"pop_15_64":1881064,"pop_year":"2024","gdp_pc_usd":29604,"vat_standard":21,"vat_from":"0000-01-01","online_shoppers":1219494,"xb_shoppers":412705,"fx_vol":3.33},{"code":"LU","name":"Luxembourg","iso3":"LUX","currency":"EUR","eu":true,"online_12m_pct":80.1,"online_year":"2025","xb_any_pct":53.89,"xb_eu_pct":48.83,"xb_world_pct":20.35,"dom_pct":20.86,"pop_15_64":465421,"pop_year":"2024","gdp_pc_usd":137782,"vat_standard":17,"vat_from":"2024-01-01","online_shoppers":372802,"xb_shoppers":250815,"fx_vol":3.33},{"code":"MT","name":"Malta","iso3":"MLT","currency":"EUR","eu":true,"online_12m_pct":71.38,"online_year":"2025","xb_any_pct":50.07,"xb_eu_pct":38.35,"xb_world_pct":32.78,"dom_pct":46.24,"pop_15_64":379746,"pop_year":"2024","gdp_pc_usd":44024,"vat_standard":18,"vat_from":"0000-01-01","online_shoppers":271063,"xb_shoppers":190139,"fx_vol":3.33},{"code":"NL","name":"Netherlands","iso3":"NLD","currency":"EUR","eu":true,"online_12m_pct":94.18,"online_year":"2025","xb_any_pct":36.31,"xb_eu_pct":28.97,"xb_world_pct":17.91,"dom_pct":77.46,"pop_15_64":11601889,"pop_year":"2024","gdp_pc_usd":67465,"vat_standard":21,"vat_from":"2019-01-01","online_shoppers":10926659,"xb_shoppers":4212646,"fx_vol":3.33},{"code":"PL","name":"Poland","iso3":"POL","currency":"PLN","eu":true,"online_12m_pct":69.73,"online_year":"2025","xb_any_pct":8.03,"xb_eu_pct":6.3,"xb_world_pct":3.68,"dom_pct":46.81,"pop_15_64":23782080,"pop_year":"2024","gdp_pc_usd":25104,"vat_standard":23,"vat_from":"0000-01-01","online_shoppers":16583244,"xb_shoppers":1909701,"fx_vol":4.67},{"code":"PT","name":"Portugal","iso3":"PRT","currency":"EUR","eu":true,"online_12m_pct":60.5,"online_year":"2025","xb_any_pct":24.85,"xb_eu_pct":19.9,"xb_world_pct":10.17,"dom_pct":36.18,"pop_15_64":6702135,"pop_year":"2024","gdp_pc_usd":29328,"vat_standard":23,"vat_from":"0000-01-01","online_shoppers":4054792,"xb_shoppers":1665481,"fx_vol":3.33},{"code":"RO","name":"Romania","iso3":"ROU","currency":"RON","eu":true,"online_12m_pct":60.28,"online_year":"2025","xb_any_pct":6.82,"xb_eu_pct":5.94,"xb_world_pct":2.06,"dom_pct":30.39,"pop_15_64":12250927,"pop_year":"2024","gdp_pc_usd":20080,"vat_standard":21,"vat_from":"2025-08-01","online_shoppers":7384859,"xb_shoppers":835513,"fx_vol":4.02},{"code":"SK","name":"Slovakia","iso3":"SVK","currency":"EUR","eu":true,"online_12m_pct":78.76,"online_year":"2025","xb_any_pct":28.38,"xb_eu_pct":25.69,"xb_world_pct":9.75,"dom_pct":53.36,"pop_15_64":3562375,"pop_year":"2024","gdp_pc_usd":25993,"vat_standard":23,"vat_from":"2025-01-01","online_shoppers":2805727,"xb_shoppers":1011002,"fx_vol":3.33},{"code":"SI","name":"Slovenia","iso3":"SVN","currency":"EUR","eu":true,"online_12m_pct":66.87,"online_year":"2025","xb_any_pct":30.07,"xb_eu_pct":26.68,"xb_world_pct":11.57,"dom_pct":43.25,"pop_15_64":1351170,"pop_year":"2024","gdp_pc_usd":34301,"vat_standard":22,"vat_from":"0000-01-01","online_shoppers":903527,"xb_shoppers":406297,"fx_vol":3.33},{"code":"ES","name":"Spain","iso3":"ESP","currency":"EUR","eu":true,"online_12m_pct":70.77,"online_year":"2025","xb_any_pct":24.47,"xb_eu_pct":17.6,"xb_world_pct":16.3,"dom_pct":51.1,"pop_15_64":32207413,"pop_year":"2024","gdp_pc_usd":35327,"vat_standard":21,"vat_from":"0000-01-01","online_shoppers":22793186,"xb_shoppers":7881154,"fx_vol":3.33},{"code":"SE","name":"Sweden","iso3":"SWE","currency":"SEK","eu":true,"online_12m_pct":88.78,"online_year":"2025","xb_any_pct":28.5,"xb_eu_pct":23.56,"xb_world_pct":12.43,"dom_pct":72.43,"pop_15_64":6581488,"pop_year":"2024","gdp_pc_usd":57223,"vat_standard":25,"vat_from":"0000-01-01","online_shoppers":5843045,"xb_shoppers":1875724,"fx_vol":5.59},{"code":"NO","name":"Norway","iso3":"NOR","currency":"NOK","eu":false,"online_12m_pct":92.51,"online_year":"2025","xb_any_pct":34.57,"xb_eu_pct":26.32,"xb_world_pct":18.44,"dom_pct":66.92,"pop_15_64":3623431,"pop_year":"2024","gdp_pc_usd":89889,"vat_standard":null,"vat_from":null,"online_shoppers":3352036,"xb_shoppers":1252620,"fx_vol":6.22},{"code":"CH","name":"Switzerland","iso3":"CHE","currency":"CHF","eu":false,"online_12m_pct":85.5,"online_year":"2025","xb_any_pct":null,"xb_eu_pct":null,"xb_world_pct":null,"dom_pct":null,"pop_15_64":5856342,"pop_year":"2024","gdp_pc_usd":107702,"vat_standard":null,"vat_from":null,"online_shoppers":5007172,"xb_shoppers":null,"fx_vol":4.62},{"code":"UK","name":"United Kingdom","iso3":"GBR","currency":"GBP","eu":false,"online_12m_pct":null,"online_year":null,"xb_any_pct":null,"xb_eu_pct":null,"xb_world_pct":null,"dom_pct":null,"pop_15_64":43865394,"pop_year":"2024","gdp_pc_usd":53341,"vat_standard":20,"vat_from":"2011-01-04","online_shoppers":null,"xb_shoppers":null,"fx_vol":0.0}],"fx":{"CHF":{"latest":1.1018,"latest_date":"2026-09-14","start":1.0802,"change_12m_pct":2.0,"vol_annualised_pct":4.62,"range_pct":6.12,"spark":[1.0802,1.075,1.0692,1.0721,1.0712,1.0706,1.0722,1.062,1.0573,1.0608,1.0569,1.0482,1.0518,1.0634,1.0621,1.0731,1.0665,1.0623,1.0639,1.0674,1.0739,1.0752,1.0705,1.0687,1.06,1.0641,1.0492,1.0505,1.0463,1.0483,1.0433,1.043,1.0463,1.0523,1.0577,1.0551,1.0614,1.0606,1.0538,1.0638,1.0622,1.0596,1.0564,1.0589,1.0577,1.0553,1.0615,1.0681,1.0632,1.0702,1.0697,1.0721,1.0809,1.0878,1.0867,1.0855,1.0873,1.0905,1.0973,1.099,1.0943,1.0924,1.0912,1.0948]},"CZK":{"latest":28.382,"latest_date":"2026-09-14","start":28.104,"change_12m_pct":0.99,"vol_annualised_pct":3.85,"range_pct":4.21,"spark":[28.104,27.997,27.82,27.862,27.956,27.901,28.001,27.976,27.795,27.768,27.617,27.431,27.369,27.461,27.547,27.741,27.677,27.713,27.862,27.776,28.036,28.006,28.013,27.943,28.094,28.269,27.898,27.916,27.774,27.808,27.984,28.17,28.28,28.35,28.293,28.143,28.03,28.021,27.921,28.132,28.246,28.126,28.057,28.1,28.083,28.077,27.958,28.023,27.928,28.081,28.141,28.224,28.413,28.478,28.365,28.245,28.294,28.248,28.414,28.251,28.171,28.171,28.146,28.228]},"DKK":{"latest":8.733,"latest_date":"2026-09-14","start":8.6264,"change_12m_pct":1.24,"vol_annualised_pct":3.35,"range_pct":4.33,"spark":[8.6264,8.5999,8.5487,8.5469,8.5873,8.5741,8.6087,8.5964,8.5266,8.5198,8.4743,8.4677,8.4617,8.4992,8.5084,8.5584,8.5351,8.5052,8.5579,8.5594,8.6248,8.6289,8.6169,8.6034,8.6202,8.6668,8.5929,8.5969,8.5605,8.5697,8.583,8.6328,8.6473,8.6434,8.6367,8.5781,8.5842,8.5961,8.5867,8.6309,8.6529,8.6478,8.6274,8.634,8.6508,8.6408,8.6475,8.6578,8.6452,8.6716,8.6696,8.7198,8.7571,8.785,8.7737,8.7405,8.7355,8.7224,8.7582,8.7351,8.7384,8.72,8.6858,8.7019]},"EUR":{"latest":1.1683,"latest_date":"2026-09-14","start":1.1557,"change_12m_pct":1.09,"vol_annualised_pct":3.33,"range_pct":4.22,"spark":[1.1557,1.1521,1.1453,1.145,1.1501,1.1482,1.1526,1.1509,1.1416,1.1409,1.1349,1.1339,1.1329,1.1379,1.1392,1.1459,1.1427,1.1383,1.1456,1.146,1.1542,1.1547,1.1533,1.1519,1.1545,1.1606,1.1501,1.1507,1.1457,1.1469,1.1488,1.1555,1.1573,1.1569,1.1559,1.1479,1.1487,1.1503,1.149,1.155,1.158,1.1573,1.1545,1.1553,1.1577,1.1562,1.157,1.1583,1.1566,1.1601,1.1599,1.1666,1.1715,1.1752,1.1736,1.1693,1.1686,1.1668,1.1715,1.1684,1.1689,1.1666,1.162,1.1642]},"HUF":{"latest":426.8,"latest_date":"2026-09-14","start":452.02,"change_12m_pct":-5.58,"vol_annualised_pct":8.61,"range_pct":13.32,"spark":[452.02,447.67,447.92,446.83,447.53,448.38,449.26,448.14,443.26,441.93,437.45,435.42,433.14,434.18,433.63,437.47,439.37,440.69,447.97,441.38,444.34,446.59,445.34,440.21,439.54,441.48,434.68,433.98,434.98,430.32,441.5,445.81,451.61,454.06,448.88,438.4,433.16,419.72,416.1,420.05,420.73,412.16,412.65,417.42,411.4,410.21,409.74,411.33,404.43,411.35,410.98,411.92,419.15,422.66,422.98,420.68,425.66,424.42,426.56,425.66,423.79,425.56,426.97,423.7]},"NOK":{"latest":12.5786,"latest_date":"2026-09-14","start":13.3878,"change_12m_pct":-6.04,"vol_annualised_pct":6.22,"range_pct":10.4,"spark":[13.3878,13.3491,13.3868,13.4263,13.3652,13.4085,13.5247,13.3997,13.2803,13.2892,13.3697,13.2373,13.3092,13.482,13.4097,13.4697,13.5127,13.6435,13.5743,13.5721,13.5717,13.5751,13.5273,13.2957,13.1817,13.2306,13.0092,12.9649,12.8941,12.9522,12.9104,12.88,12.9027,12.7594,12.8608,12.866,12.7813,12.7912,12.6007,12.5699,12.5385,12.5234,12.4662,12.436,12.4712,12.4733,12.5467,12.7296,12.7315,12.9269,13.141,13.1463,13.039,13.0399,12.8948,12.8438,12.7867,12.8351,12.8119,12.7388,12.6996,12.6686,12.5574,12.4537]},"PLN":{"latest":5.0723,"latest_date":"2026-09-14","start":4.9203,"change_12m_pct":3.09,"vol_annualised_pct":4.67,"range_pct":6.76,"spark":[4.9203,4.9032,4.8875,4.8887,4.8911,4.8887,4.9001,4.8696,4.8373,4.8534,4.8212,4.7942,4.7902,4.8052,4.8169,4.8497,4.8303,4.7923,4.8482,4.8373,4.8647,4.8635,4.8729,4.8422,4.8526,4.9019,4.8499,4.8452,4.8394,4.8429,4.8924,4.9163,4.9397,4.9496,4.9405,4.9124,4.8887,4.8787,4.8595,4.9022,4.9295,4.8973,4.8925,4.9159,4.899,4.894,4.8984,4.9251,4.905,4.9681,4.9728,4.9986,5.0473,5.0836,5.0824,5.0536,5.0407,5.016,5.0426,5.0464,5.0354,5.0589,5.0276,5.0237]},"RON":{"latest":6.1413,"latest_date":"2026-09-14","start":5.8587,"change_12m_pct":4.82,"vol_annualised_pct":4.02,"range_pct":7.42,"spark":[5.8587,5.8399,5.8137,5.817,5.8522,5.8477,5.864,5.85,5.8031,5.8022,5.7718,5.7645,5.764,5.7898,5.7984,5.8357,5.8164,5.7964,5.8305,5.8409,5.8732,5.877,5.8724,5.8686,5.8837,5.9133,5.8553,5.8635,5.8407,5.8434,5.8501,5.8855,5.8961,5.8956,5.8918,5.8519,5.8507,5.8562,5.8579,5.8852,6.0188,6.045,6.0096,6.0462,6.0648,6.0734,6.069,6.069,6.0511,6.0872,6.0799,6.1081,6.1343,6.1601,6.1458,6.1176,6.1313,6.1307,6.1392,6.1276,6.1372,6.1344,6.1047,6.1173]},"SEK":{"latest":13.179,"latest_date":"2026-09-14","start":12.6528,"change_12m_pct":4.16,"vol_annualised_pct":5.59,"range_pct":8.64,"spark":[12.6528,12.6705,12.6389,12.6591,12.6371,12.6398,12.6936,12.563,12.4669,12.4758,12.5366,12.4056,12.4527,12.5717,12.4892,12.5576,12.3929,12.4485,12.3955,12.4014,12.3921,12.3712,12.3746,12.1766,12.1964,12.276,12.2064,12.2215,12.2302,12.2411,12.2671,12.2549,12.463,12.4743,12.5302,12.4987,12.4941,12.4806,12.3508,12.4607,12.5466,12.5472,12.6007,12.5672,12.532,12.4738,12.5733,12.7343,12.5961,12.8289,12.8591,12.8692,12.9588,12.9826,12.967,12.9139,12.8376,12.746,12.8828,12.8831,12.9521,12.9357,12.9272,12.9799]}},"sources":{"eurostat_ib20":{"url":"https://ec.europa.eu/eurostat/databrowser/view/isoc_ec_ib20/","updated":"2026-04-17T11:00:00+0200"},"eurostat_ibos":{"url":"https://ec.europa.eu/eurostat/databrowser/view/isoc_ec_ibos/","updated":"2026-04-17T11:00:00+0200","note":"series ends 2023"},"worldbank":{"url":"https://api.worldbank.org/v2/country/all/indicator/SP.POP.1564.TO?format=json"},"frankfurter":{"url":"https://api.frankfurter.dev/v1/","note":"ECB reference rates, GBP base","window":"2025-09-14 to 2026-09-14"},"vat":{"url":"https://github.com/ibericode/vat-rates","last_commit":"2026-01-19","note":"community-maintained; verify against EC Taxes in Europe DB before relying on it"}}};
+
+(function () {
+  const $ = (s, el = document) => el.querySelector(s);
+  const fmtPct = v => v == null ? "n/a" : v.toFixed(0) + "%";
+  const fmtM = v => v == null ? "n/a" : (v / 1e6).toFixed(1) + "m";
+  const fmtK = v => v == null ? "n/a" : "$" + Math.round(v / 1000) + "k";
+  const CUR_NAME = { EUR:"Euro", CHF:"Franc", CZK:"Koruna", DKK:"Krone", HUF:"Forint", NOK:"Krone", PLN:"Zloty", RON:"Leu", SEK:"Krona" };
+  const MANUAL_VAT = { NO: 25, CH: 8.1 };
+
+  const rows = DATA.countries.map(r => ({ ...r, vat_standard: r.vat_standard ?? MANUAL_VAT[r.code] ?? null }));
+  const uk = rows.find(r => r.code === "UK");
+  const eu = rows.filter(r => r.eu);
+  const plotted = rows.filter(r => r.code !== "UK" && r.online_12m_pct != null && r.xb_any_pct != null);
+
+  $("#built").textContent = DATA.generated.replace("T", " ").slice(0, 16) + " UTC";
+
+  // ---------- KPIs ----------
+  const xbTotal = eu.reduce((s, r) => s + (r.xb_shoppers || 0), 0);
+  const onlineTotal = eu.reduce((s, r) => s + (r.online_shoppers || 0), 0);
+  const vats = eu.map(r => r.vat_standard).filter(v => v != null);
+  const vatLo = rows.find(r => r.eu && r.vat_standard === Math.min(...vats));
+  const vatHi = rows.find(r => r.eu && r.vat_standard === Math.max(...vats));
+  const fxEntries = Object.entries(DATA.fx).filter(([k]) => k !== "EUR");
+  const worstFx = fxEntries.sort((a, b) => b[1].vol_annualised_pct - a[1].vol_annualised_pct)[0];
+  const eurFx = DATA.fx.EUR;
+  const kpis = [
+    { lbl: "EU27 adults who shop online", val: DATA.eu27_online_12m_pct.toFixed(0), unit: "%", sub: `≈ ${fmtM(onlineTotal)} working-age online buyers across the 27 (Eurostat, ${plotted[0].online_year})` },
+    { lbl: "Already buying cross-border", val: fmtM(xbTotal).replace("m", ""), unit: "m people", sub: "bought from a foreign seller in the last 3 months (Eurostat, 2023). The reachable pool before any localisation." },
+    { lbl: "Standard VAT spread", val: `${vatLo.vat_standard}–${vatHi.vat_standard}`, unit: "%", sub: `${vatLo.name} to ${vatHi.name}. One OSS return, 27 different rates to get right.` },
+    { lbl: "Most volatile GBP pair", val: worstFx[0], unit: `${worstFx[1].vol_annualised_pct.toFixed(1)}% vol`, sub: `12m move ${worstFx[1].change_12m_pct > 0 ? "+" : ""}${worstFx[1].change_12m_pct.toFixed(1)}%. Euro for comparison: ${eurFx.vol_annualised_pct.toFixed(1)}% vol, ${eurFx.change_12m_pct > 0 ? "+" : ""}${eurFx.change_12m_pct.toFixed(1)}%.` },
+  ];
+  const kwrap = $("#kpis");
+  for (const k of kpis) {
+    const d = document.createElement("div"); d.className = "kpi";
+    const l = document.createElement("div"); l.className = "lbl"; l.textContent = k.lbl;
+    const v = document.createElement("div"); v.className = "val"; v.textContent = k.val;
+    const u = document.createElement("small"); u.textContent = k.unit; v.appendChild(u);
+    const s = document.createElement("div"); s.className = "sub"; s.textContent = k.sub;
+    d.append(l, v, s); kwrap.appendChild(d);
+  }
+
+  // ---------- tooltip ----------
+  const tip = $("#tip");
+  function showTip(evt, title, pairs) {
+    tip.replaceChildren();
+    const t = document.createElement("div"); t.className = "t"; t.textContent = title; tip.appendChild(t);
+    for (const [label, value] of pairs) {
+      const r = document.createElement("div"); r.className = "row";
+      const b = document.createElement("b"); b.textContent = value;
+      const s = document.createElement("span"); s.textContent = label;
+      r.append(b, s); tip.appendChild(r);
+    }
+    tip.hidden = false; moveTip(evt);
+  }
+  function moveTip(evt) {
+    const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = evt.clientX + pad, y = evt.clientY + pad;
+    if (x + w > innerWidth - 8) x = evt.clientX - w - pad;
+    if (y + h > innerHeight - 8) y = evt.clientY - h - pad;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function hideTip() { tip.hidden = true; }
+  const pairsFor = r => [
+    [`buy online (${r.online_year})`, fmtPct(r.online_12m_pct)],
+    ["buy from foreign sellers (2023)", fmtPct(r.xb_any_pct)],
+    ["  of which other EU", fmtPct(r.xb_eu_pct)],
+    ["cross-border shoppers", fmtM(r.xb_shoppers)],
+    ["working-age population", fmtM(r.pop_15_64)],
+    ["standard VAT", r.vat_standard == null ? "n/a" : r.vat_standard + "%"],
+    ["currency", r.currency + (r.currency !== "EUR" && DATA.fx[r.currency] ? ` · ${DATA.fx[r.currency].vol_annualised_pct.toFixed(1)}% vol` : "")],
+  ];
+
+  // cross-highlight
+  function hl(code, on) {
+    document.querySelectorAll(`[data-code="${code}"]`).forEach(el => el.classList.toggle("hl", on));
+  }
+
+  // ---------- scatter ----------
+  const svg = $("#scatter");
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (parent) parent.appendChild(e); return e; };
+  const W = 760, H = 392, m = { t: 12, r: 16, b: 40, l: 44 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const xMax = Math.ceil(Math.max(...plotted.map(r => r.xb_any_pct)) / 10) * 10 + 5;
+  const yMin = Math.floor(Math.min(...plotted.map(r => r.online_12m_pct)) / 10) * 10 - 5;
+  const x = v => m.l + (v / xMax) * iw;
+  const y = v => m.t + ih - ((v - yMin) / (100 - yMin)) * ih;
+  const popMax = Math.max(...plotted.map(r => r.pop_15_64));
+  const rad = p => 5 + 27 * Math.sqrt(p / popMax);
+
+  const grid = el("g", { class: "grid" }, svg);
+  for (let v = 0; v <= xMax; v += 10) { el("line", { x1: x(v), x2: x(v), y1: m.t, y2: m.t + ih }, grid); el("text", { x: x(v), y: m.t + ih + 14, "text-anchor": "middle", class: "tick" }, grid).textContent = v + "%"; }
+  for (let v = Math.ceil(yMin / 10) * 10; v <= 100; v += 10) { el("line", { x1: m.l, x2: m.l + iw, y1: y(v), y2: y(v) }, grid); el("text", { x: m.l - 6, y: y(v) + 3, "text-anchor": "end", class: "tick" }, grid).textContent = v + "%"; }
+  el("text", { x: m.l + iw / 2, y: H - 6, "text-anchor": "middle", class: "axis-lbl" }, svg).textContent = "Bought from a seller in another country, last 3 months (% of 16 to 74s, 2023)";
+  el("text", { x: 12, y: m.t + ih / 2, "text-anchor": "middle", class: "axis-lbl", transform: `rotate(-90 12 ${m.t + ih / 2})` }, svg).textContent = "Bought online, last 12 months (% of 16 to 74s)";
+
+  const median = a => { const s = [...a].sort((p, q) => p - q); const k = s.length / 2; return s.length % 2 ? s[Math.floor(k)] : (s[k - 1] + s[k]) / 2; };
+  const euPlot = plotted.filter(r => r.eu);
+  const mx = median(euPlot.map(r => r.xb_any_pct)), my = median(euPlot.map(r => r.online_12m_pct));
+  const med = el("g", { class: "median" }, svg);
+  el("line", { x1: x(mx), x2: x(mx), y1: m.t, y2: m.t + ih }, med);
+  el("line", { x1: m.l, x2: m.l + iw, y1: y(my), y2: y(my) }, med);
+  el("text", { x: x(mx) + 4, y: m.t + 10 }, med).textContent = `EU median ${mx.toFixed(0)}%`;
+  el("text", { x: m.l + iw - 2, y: y(my) - 4, "text-anchor": "end" }, med).textContent = `EU median ${my.toFixed(0)}%`;
+
+  // draw large bubbles first so small ones stay on top
+  const byPop = [...plotted].sort((a, b) => b.pop_15_64 - a.pop_15_64);
+  const labelSet = new Set([...plotted].sort((a, b) => (b.xb_shoppers || 0) - (a.xb_shoppers || 0)).slice(0, 9).map(r => r.code));
+  // [side, dy]: side 1 = label to the right of the bubble edge, -1 = to the left
+  const labelPos = { DE: [1, 4], FR: [1, 4], ES: [-1, 4], IT: [1, 4], NL: [1, 4], BE: [1, 4], AT: [1, -9], PL: [1, 4], CZ: [1, -10], SE: [1, 4], IE: [1, 4] };
+  for (const r of byPop) {
+    const g = el("g", { class: "pt " + (r.currency === "EUR" ? "euro" : "noneuro"), "data-code": r.code, tabindex: 0, role: "img", "aria-label": `${r.name}: ${fmtPct(r.online_12m_pct)} buy online, ${fmtPct(r.xb_any_pct)} buy cross-border` }, svg);
+    const cx = x(r.xb_any_pct), cy = y(r.online_12m_pct), rr = rad(r.pop_15_64);
+    el("circle", { class: "mark", cx, cy, r: rr }, g);
+    el("circle", { class: "hit", cx, cy, r: Math.max(rr, 12) }, g);
+    if (labelSet.has(r.code)) { const [side, dy] = labelPos[r.code] || [1, 4]; el("text", { x: cx + side * (rr + 5), y: cy + dy, "text-anchor": side > 0 ? "start" : "end" }, g).textContent = r.name; }
+    const title = r.name;
+    g.addEventListener("pointerenter", e => { showTip(e, title, pairsFor(r)); hl(r.code, true); });
+    g.addEventListener("pointermove", moveTip);
+    g.addEventListener("pointerleave", () => { hideTip(); hl(r.code, false); });
+    g.addEventListener("focus", e => { const b = g.getBoundingClientRect(); showTip({ clientX: b.right, clientY: b.top }, title, pairsFor(r)); hl(r.code, true); });
+    g.addEventListener("blur", () => { hideTip(); hl(r.code, false); });
+  }
+
+  // ---------- VAT columns ----------
+  const vsvg = $("#vat");
+  const vrows = rows.filter(r => r.code !== "UK" && r.vat_standard != null).sort((a, b) => b.vat_standard - a.vat_standard || a.name.localeCompare(b.name));
+  const VW = 520, VH = 150, vm = { t: 14, r: 4, b: 22, l: 4 };
+  const slot = (VW - vm.l - vm.r) / vrows.length, bw = Math.max(2, slot - 2);
+  const vMax = 28, vy = v => vm.t + (VH - vm.t - vm.b) * (1 - v / vMax);
+  const ramp = ["--seq-1", "--seq-2", "--seq-3", "--seq-4", "--seq-5", "--seq-6", "--seq-7"];
+  const vMin = Math.min(...vrows.map(r => r.vat_standard)), vRange = Math.max(...vrows.map(r => r.vat_standard)) - vMin;
+  const ukY = vy(uk.vat_standard);
+  el("line", { x1: vm.l, x2: VW - vm.r, y1: ukY, y2: ukY, stroke: "var(--ref)", "stroke-dasharray": "3 3" }, vsvg);
+  el("text", { x: VW - vm.r, y: ukY + 11, "text-anchor": "end", class: "tick" }, vsvg).textContent = `UK ${uk.vat_standard}%`;
+  vrows.forEach((r, i) => {
+    const g = el("g", { class: "bar", "data-code": r.code, tabindex: 0, "aria-label": `${r.name} standard VAT ${r.vat_standard}%` }, vsvg);
+    const xx = vm.l + i * slot + 1, h = vy(0) - vy(r.vat_standard);
+    const step = ramp[Math.min(6, Math.floor(((r.vat_standard - vMin) / (vRange || 1)) * 6.999))];
+    const rect = el("rect", { class: "mark", x: xx, y: vy(r.vat_standard), width: bw, height: h, fill: `var(${step})` }, g);
+    el("text", { x: xx + bw / 2, y: VH - vm.b + 12, "text-anchor": "middle" }, g).textContent = r.code;
+    el("text", { class: "v", x: xx + bw / 2, y: vy(r.vat_standard) - 3, "text-anchor": "middle" }, g).textContent = r.vat_standard;
+    const t = r.name;
+    g.addEventListener("pointerenter", e => { showTip(e, t, [["standard VAT", r.vat_standard + "%"], ["in force since", r.vat_from && r.vat_from !== "0000-01-01" ? r.vat_from : "before 2011 (source floor)"], ["currency", r.currency]]); hl(r.code, true); });
+    g.addEventListener("pointermove", moveTip);
+    g.addEventListener("pointerleave", () => { hideTip(); hl(r.code, false); });
+  });
+
+  // ---------- FX table ----------
+  const marketsFor = c => rows.filter(r => r.currency === c && r.code !== "UK").map(r => r.code).join(", ");
+  const spark = (vals) => {
+    const w = 64, h = 16, lo = Math.min(...vals), hi = Math.max(...vals);
+    const px = i => (i / (vals.length - 1)) * w, py = v => hi === lo ? h / 2 : h - 2 - ((v - lo) / (hi - lo)) * (h - 4);
+    const s = el("svg", { class: "spark", viewBox: `0 0 ${w} ${h}` });
+    el("path", { d: vals.map((v, i) => (i ? "L" : "M") + px(i).toFixed(1) + " " + py(v).toFixed(1)).join(" ") }, s);
+    el("circle", { cx: w, cy: py(vals[vals.length - 1]), r: 2 }, s);
+    return s;
+  };
+  const fxBody = $("#fxtab tbody");
+  const fxOrder = Object.entries(DATA.fx).sort((a, b) => (a[0] === "EUR" ? -1 : b[0] === "EUR" ? 1 : b[1].vol_annualised_pct - a[1].vol_annualised_pct));
+  for (const [c, f] of fxOrder) {
+    const tr = document.createElement("tr"); tr.dataset.cur = c;
+    const cells = [];
+    const td0 = document.createElement("td"); const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = c === "EUR" ? "var(--euro)" : "var(--noneuro)"; const cc = document.createElement("span"); cc.className = "cc mono"; cc.textContent = c; td0.append(sw, cc, document.createTextNode(" " + (CUR_NAME[c] || ""))); cells.push(td0);
+    const td1 = document.createElement("td"); td1.textContent = c === "EUR" ? "20 markets" : marketsFor(c); cells.push(td1);
+    const td2 = document.createElement("td"); td2.className = "r num"; td2.dataset.role = "latest"; td2.textContent = f.latest.toFixed(c === "HUF" ? 1 : 3); cells.push(td2);
+    const td3 = document.createElement("td"); td3.className = "r num " + (f.change_12m_pct >= 0 ? "up" : "down"); td3.textContent = (f.change_12m_pct >= 0 ? "+" : "") + f.change_12m_pct.toFixed(1) + "%"; cells.push(td3);
+    const td4 = document.createElement("td"); td4.className = "r num"; td4.textContent = f.vol_annualised_pct.toFixed(1) + "%"; cells.push(td4);
+    const td5 = document.createElement("td"); td5.appendChild(spark(f.spark)); cells.push(td5);
+    tr.append(...cells); fxBody.appendChild(tr);
+  }
+
+  // ---------- rank table ----------
+  const rbody = $("#rank tbody");
+  const ranked = rows.filter(r => r.xb_shoppers != null).sort((a, b) => b.xb_shoppers - a.xb_shoppers).slice(0, 8);
+  const xbMax = ranked[0].xb_shoppers;
+  ranked.forEach((r, i) => {
+    const tr = document.createElement("tr"); tr.dataset.code = r.code; if (r.currency !== "EUR") tr.classList.add("noneuro");
+    const td = (txt, cls) => { const d = document.createElement("td"); if (cls) d.className = cls; if (txt != null) d.textContent = txt; return d; };
+    const name = td(null); const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = r.currency === "EUR" ? "var(--euro)" : "var(--noneuro)"; name.append(sw, document.createTextNode(r.name)); name.style.fontWeight = 500;
+    const cur = td(null); const tg = document.createElement("span"); tg.className = "tag mono" + (r.currency === "EUR" ? " eu" : ""); tg.textContent = r.currency; cur.appendChild(tg);
+    const xb = td(null); const bc = document.createElement("span"); bc.className = "bar-cell"; const bar = document.createElement("i"); bar.style.width = Math.round(120 * r.xb_shoppers / xbMax) + "px"; const bv = document.createElement("span"); bv.className = "num"; bv.textContent = fmtM(r.xb_shoppers); bc.append(bar, bv); xb.appendChild(bc);
+    tr.append(td(i + 1, "num"), name, cur, td(fmtPct(r.online_12m_pct), "r num"), td(fmtPct(r.xb_any_pct), "r num"), xb, td(r.vat_standard + "%", "r num"), td(r.currency === "EUR" ? DATA.fx.EUR.vol_annualised_pct.toFixed(1) + "%" : (DATA.fx[r.currency]?.vol_annualised_pct.toFixed(1) ?? "0.0") + "%", "r num"), td(fmtK(r.gdp_pc_usd), "r num"));
+    tr.addEventListener("pointerenter", () => hl(r.code, true));
+    tr.addEventListener("pointerleave", () => hl(r.code, false));
+    rbody.appendChild(tr);
+  });
+
+  // ---------- footer ----------
+  const S = DATA.sources;
+  $("#method").textContent = `Method: cross-border shoppers = working-age population × share who bought from a foreign seller. Online buyers = population × share who bought online in the last 12 months. FX volatility = standard deviation of daily log returns × √252, window ${S.frankfurter.window}. VAT is the standard rate in force on the build date.`;
+  const src = $("#sources");
+  const links = [
+    ["Eurostat isoc_ec_ib20", S.eurostat_ib20.url, `updated ${(S.eurostat_ib20.updated || "").slice(0, 10)}`],
+    ["Eurostat isoc_ec_ibos", S.eurostat_ibos.url, "2023, final year of the series"],
+    ["World Bank SP.POP.1564.TO, NY.GDP.PCAP.CD", "https://data.worldbank.org/indicator/SP.POP.1564.TO", "2024"],
+    ["ECB reference rates via Frankfurter", "https://frankfurter.dev", "GBP base"],
+    ["ibericode/vat-rates", S.vat.url, `last commit ${S.vat.last_commit}`],
+  ];
+  src.appendChild(document.createTextNode("Sources: "));
+  links.forEach(([n, u, note], i) => { const a = document.createElement("a"); a.href = u; a.target = "_blank"; a.rel = "noopener"; a.textContent = n; src.appendChild(a); src.appendChild(document.createTextNode(` (${note})${i < links.length - 1 ? " · " : ""}`)); });
+
+  // ---------- live FX refresh (works where the page is hosted; silently falls back to the snapshot) ----------
+  (async () => {
+    try {
+      const syms = Object.keys(DATA.fx).join(",");
+      const ctrl = new AbortController(); setTimeout(() => ctrl.abort(), 5000);
+      const res = await fetch(`https://api.frankfurter.dev/v1/latest?base=GBP&symbols=${syms}`, { signal: ctrl.signal });
+      if (!res.ok) return;
+      const live = await res.json();
+      for (const tr of fxBody.querySelectorAll("tr")) {
+        const c = tr.dataset.cur; const v = live.rates[c]; if (v == null) continue;
+        tr.querySelector('[data-role="latest"]').textContent = v.toFixed(c === "HUF" ? 1 : 3);
+      }
+      const pill = $("#fx-pill"); pill.classList.add("live"); $("#fx-pill-text").textContent = `ECB rates: live, ${live.date}`;
+    } catch (e) { /* snapshot stays */ }
+  })();
+})();
+</script>
