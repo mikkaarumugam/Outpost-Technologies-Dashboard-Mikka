@@ -132,7 +132,7 @@
   svg .bar rect.mark { rx: 0; }
   svg .bar:hover rect.mark, svg .bar.hl rect.mark { stroke: var(--ink); stroke-width: 1; }
   svg .bar text { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 9.5px; fill: var(--muted); }
-  svg .bar text.v { fill: var(--ink-2); font-size: 9px; }
+  svg .bar text.v { fill: var(--ink); font-size: 10px; font-weight: 500; }
 
   /* fx table */
   table { width: 100%; border-collapse: collapse; }
@@ -203,7 +203,7 @@
     <div class="right">
       <div class="card">
         <div class="card-h">
-          <div><h2>Standard VAT rate</h2><div class="sub">The rate a merchant of record charges and remits per destination. Range 17% to 27%.</div></div>
+          <div><h2>Standard VAT rate</h2><div class="sub">The rate a merchant of record charges and remits per destination. Hover a bar for the exact rate.</div></div>
         </div>
         <svg id="vat" viewBox="0 0 520 150" role="img" aria-label="Standard VAT rate by country, sorted high to low"></svg>
       </div>
@@ -374,21 +374,25 @@ const DATA = /*__DATA__*/null;
   // ---------- VAT columns ----------
   const vsvg = $("#vat");
   const vrows = rows.filter(r => r.code !== "UK" && r.vat_standard != null).sort((a, b) => b.vat_standard - a.vat_standard || a.name.localeCompare(b.name));
-  const VW = 520, VH = 150, vm = { t: 14, r: 4, b: 22, l: 4 };
-  const slot = (VW - vm.l - vm.r) / vrows.length, bw = Math.max(2, slot - 2);
-  const vMax = 28, vy = v => vm.t + (VH - vm.t - vm.b) * (1 - v / vMax);
+  const VW = 520, VH = 150, vm = { t: 12, r: 4, b: 22, l: 40 };
+  const slot = (VW - vm.l - vm.r) / vrows.length, bw = Math.max(2, slot - 3);
+  const vMax = 30, vy = v => vm.t + (VH - vm.t - vm.b) * (1 - v / vMax);
   const ramp = ["--seq-1", "--seq-2", "--seq-3", "--seq-4", "--seq-5", "--seq-6", "--seq-7"];
   const vMin = Math.min(...vrows.map(r => r.vat_standard)), vRange = Math.max(...vrows.map(r => r.vat_standard)) - vMin;
+  // scale: two hairlines plus the UK reference, all labelled in the axis gutter so nothing sits on the bars
+  const vgrid = el("g", { class: "grid" }, vsvg);
+  for (const v of [10, 30]) { el("line", { x1: vm.l, x2: VW - vm.r, y1: vy(v), y2: vy(v) }, vgrid); el("text", { x: vm.l - 6, y: vy(v) + 3, "text-anchor": "end", class: "tick" }, vgrid).textContent = v + "%"; }
   const ukY = vy(uk.vat_standard);
   el("line", { x1: vm.l, x2: VW - vm.r, y1: ukY, y2: ukY, stroke: "var(--ref)", "stroke-dasharray": "3 3" }, vsvg);
-  el("text", { x: VW - vm.r, y: ukY + 11, "text-anchor": "end", class: "tick" }, vsvg).textContent = `UK ${uk.vat_standard}%`;
+  el("text", { x: vm.l - 6, y: ukY + 3, "text-anchor": "end", class: "tick", style: "fill: var(--ink-2); font-weight: 500" }, vsvg).textContent = `UK ${uk.vat_standard}%`;
+  const labelled = new Set([vrows[0].code, vrows.filter(r => r.eu).slice(-1)[0].code, "CH"]);
   vrows.forEach((r, i) => {
     const g = el("g", { class: "bar", "data-code": r.code, tabindex: 0, "aria-label": `${r.name} standard VAT ${r.vat_standard}%` }, vsvg);
-    const xx = vm.l + i * slot + 1, h = vy(0) - vy(r.vat_standard);
+    const xx = vm.l + i * slot + 1.5, h = vy(0) - vy(r.vat_standard);
     const step = ramp[Math.min(6, Math.floor(((r.vat_standard - vMin) / (vRange || 1)) * 6.999))];
     const rect = el("rect", { class: "mark", x: xx, y: vy(r.vat_standard), width: bw, height: h, fill: `var(${step})` }, g);
     el("text", { x: xx + bw / 2, y: VH - vm.b + 12, "text-anchor": "middle" }, g).textContent = r.code;
-    el("text", { class: "v", x: xx + bw / 2, y: vy(r.vat_standard) - 3, "text-anchor": "middle" }, g).textContent = r.vat_standard;
+    if (labelled.has(r.code)) el("text", { class: "v", x: xx + bw / 2, y: vy(r.vat_standard) - 4, "text-anchor": "middle" }, g).textContent = r.vat_standard + "%";
     const t = r.name;
     g.addEventListener("pointerenter", e => { showTip(e, t, [["standard VAT", r.vat_standard + "%"], ["in force since", r.vat_from && r.vat_from !== "0000-01-01" ? r.vat_from : "before 2011 (source floor)"], ["currency", r.currency]]); hl(r.code, true); });
     g.addEventListener("pointermove", moveTip);
