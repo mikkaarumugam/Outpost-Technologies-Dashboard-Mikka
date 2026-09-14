@@ -237,6 +237,7 @@
   </section>
 
   <footer class="foot">
+    <div id="warnings" class="method" hidden style="color: var(--bad)"></div>
     <div class="method" id="method"></div>
     <div id="sources"></div>
     <div>Caveats: Eurostat shares are of individuals aged 16 to 74, applied here to the World Bank 15 to 64 population, so head counts are a proxy. Cross-border series ended in 2023. VAT is the standard rate only; reduced rates, OSS and IOSS thresholds are not modelled. Switzerland has no Eurostat cross-border data; Norway and Switzerland VAT entered by hand from the national tax authorities.</div>
@@ -436,6 +437,7 @@ const DATA = /*__DATA__*/null;
 
   // ---------- footer ----------
   const S = DATA.sources;
+  if (DATA.warnings && DATA.warnings.length) { const w = $("#warnings"); w.textContent = "Data warning: " + DATA.warnings.join(" "); w.hidden = false; }
   $("#method").textContent = `Method: cross-border shoppers = working-age population × share who bought from a foreign seller. Online buyers = population × share who bought online in the last 12 months. FX volatility = standard deviation of daily log returns × √252, window ${S.frankfurter.window}. VAT is the standard rate in force on the build date.`;
   const src = $("#sources");
   const links = [
